@@ -26,6 +26,14 @@ allprojects {
     dependencyManagement {
         dependencies {
             dependency('com.google.guava:guava:31.0.1-jre')
+            dependency('org.jetbrains:annotations:22.0.0')
+
+            // Testing
+            dependency ('org.junit.jupiter:junit-jupiter-api:5.8.2')
+            dependency ('org.junit.jupiter:junit-jupiter-engine:5.8.2')
+            dependency ('org.assertj:assertj-core:3.22.0')
+            dependency ('org.mockito:mockito-core:4.2.0')
+            dependency ('org.mockito:mockito-junit-jupiter:4.2.0')
         }
     }
 
