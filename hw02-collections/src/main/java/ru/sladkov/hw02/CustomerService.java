@@ -9,19 +9,19 @@ public class CustomerService {
 
     public Map.Entry<Customer, String> getSmallest() {
         Map.Entry<Customer, String> currEntry = treeMap.firstEntry();
-        return getImmutableEntry(currEntry);
+        return getImmutableEntryOrNull(currEntry);
     }
 
     public Map.Entry<Customer, String> getNext(Customer customer) {
         Map.Entry<Customer, String> currEntry = treeMap.higherEntry(customer);
-        return getImmutableEntry(currEntry);
+        return getImmutableEntryOrNull(currEntry);
     }
 
     public void add(Customer customer, String data) {
         treeMap.put(customer, data);
     }
 
-    private Map.Entry<Customer, String> getImmutableEntry(Map.Entry<Customer, String> entry) {
+    private Map.Entry<Customer, String> getImmutableEntryOrNull(Map.Entry<Customer, String> entry) {
         if (entry == null) {
             return null;
         }
