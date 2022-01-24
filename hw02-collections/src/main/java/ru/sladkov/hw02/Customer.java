@@ -1,7 +1,5 @@
 package ru.sladkov.hw02;
 
-import org.jetbrains.annotations.NotNull;
-
 public class Customer implements Comparable<Customer> {
     private final long id;
     private String name;
@@ -57,7 +55,7 @@ public class Customer implements Comparable<Customer> {
     }
 
     @Override
-    public int compareTo(@NotNull Customer anotherCustomer) {
+    public int compareTo(Customer anotherCustomer) throws NullPointerException {
         return (int) (this.scores - anotherCustomer.scores);
     }
 }
