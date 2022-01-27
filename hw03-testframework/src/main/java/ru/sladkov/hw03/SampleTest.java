@@ -40,6 +40,6 @@ public class SampleTest {
     @After
     public void tearDown() {
         System.out.println("--- @After called in test class " + this.toString() + " ---");
-        throw new RuntimeException();
+//        throw new RuntimeException();
     }
 }
