@@ -1,40 +1,31 @@
 package ru.sladkov.hw03;
 
+import ru.sladkov.hw03.annotations.*;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class TestsExecutor {
 
     public static void executeTests(Class<?> clazz) {
-        List<Method> beforeMethods = new ArrayList<>();
-        List<Method> afterMethods = new ArrayList<>();
-        List<Method> testMethods = new ArrayList<>();
         int passedTests = 0;
         int failedTests = 0;
 
         //Get @Before, @Test and @After methods
-        Method[] methods = clazz.getDeclaredMethods();
-        for (Method method : methods) {
-            Annotation[] annotations = method.getAnnotations();
-            for (Annotation annotation : annotations) {
-                switch (annotation.toString()) {
-                    case "@ru.sladkov.hw03.annotations.Test()" -> testMethods.add(method);
-                    case "@ru.sladkov.hw03.annotations.Before()" -> beforeMethods.add(method);
-                    case "@ru.sladkov.hw03.annotations.After()" -> afterMethods.add(method);
-                }
-            }
-        }
+        Map<String, List<Method>> annotatedMethodsMap = getAnnotatedMethods(clazz);
 
         //Execute tests
         System.out.println(clazz.getName() + ":");
-        for (Method testMethod : testMethods) {
+        for (Method testMethod : annotatedMethodsMap.get("@Test")) {
             System.out.println("Executing " + testMethod.getName() + ":");
-            boolean isTestPassed = executeTest(clazz, testMethod, beforeMethods, afterMethods);
+            boolean isTestPassed = executeTest(clazz, testMethod, annotatedMethodsMap.get("@Before"),
+                    annotatedMethodsMap.get("@After"));
             if (isTestPassed) {
                 passedTests++;
                 System.out.println(testMethod.getName() + " -> passed");
@@ -47,6 +38,29 @@ public class TestsExecutor {
 
         System.out.println("Out of " + (passedTests + failedTests) + " tests, " + passedTests + " passed and " +
                 failedTests + " failed");
+    }
+
+    private static Map<String, List<Method>> getAnnotatedMethods(Class<?> clazz) {
+        List<Method> beforeMethods = new ArrayList<>();
+        List<Method> testMethods = new ArrayList<>();
+        List<Method> afterMethods = new ArrayList<>();
+
+        Method[] methods = clazz.getDeclaredMethods();
+        for (Method method : methods) {
+            if (method.isAnnotationPresent(Test.class)) {
+                testMethods.add(method);
+            } else if (method.isAnnotationPresent(Before.class)) {
+                beforeMethods.add(method);
+            } else if (method.isAnnotationPresent(After.class)) {
+                afterMethods.add(method);
+            }
+        }
+
+        Map<String, List<Method>> result = new HashMap<>();
+        result.put("@Before", beforeMethods);
+        result.put("@Test", testMethods);
+        result.put("@After", afterMethods);
+        return result;
     }
 
     private static boolean executeTest(Class<?> clazz, Method testMethod, List<Method> beforeMethods,
