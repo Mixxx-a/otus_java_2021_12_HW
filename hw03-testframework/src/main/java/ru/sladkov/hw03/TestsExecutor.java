@@ -21,7 +21,7 @@ public class TestsExecutor {
         Map<String, List<Method>> annotatedMethodsMap = getAnnotatedMethods(clazz);
 
         //Execute tests
-        System.out.println(clazz.getName() + ":");
+        System.out.println("\n" + clazz.getName() + ":");
         for (Method testMethod : annotatedMethodsMap.get("@Test")) {
             System.out.println("Executing " + testMethod.getName() + ":");
             boolean isTestPassed = executeTest(clazz, testMethod, annotatedMethodsMap.get("@Before"),
@@ -74,63 +74,48 @@ public class TestsExecutor {
             return false;
         }
 
-        //Execute @Before methods
+        //Execute @Before and @Test, if they fail - execute safe @After
         try {
-            executeMethods(classInstance, beforeMethods);
+            executeMethods(classInstance, beforeMethods.toArray(new Method[0]));
+            executeMethods(classInstance, testMethod);
         } catch (Exception e) {
-            System.out.println("Can't execute @Before methods:" + e.getCause().toString());
+            printCauseStackTrace(e);
             executeAftersWithoutThrowingException(classInstance, afterMethods);
             return false;
         }
 
-        //Execute current @Test method
+        //Execute @After
         try {
-            executeMethod(classInstance, testMethod);
-        } catch (InvocationTargetException e) {
-            Throwable targetException = e.getTargetException();
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            targetException.printStackTrace(pw);
-            System.out.println("Exception: " + sw);
-            executeAftersWithoutThrowingException(classInstance, afterMethods);
-            return false;
+            executeMethods(classInstance, afterMethods.toArray(new Method[0]));
         } catch (Exception e) {
-            System.out.println("Error in initializing test: " + e.getCause().toString());
-            executeAftersWithoutThrowingException(classInstance, afterMethods);
-            return false;
-        }
-
-        //Execute @After methods
-        try {
-            executeMethods(classInstance, afterMethods);
-        } catch (Exception e) {
-            System.out.println("Can't execute @After methods:" + e.getCause().toString());
+            printCauseStackTrace(e);
             return false;
         }
 
         return true;
     }
 
-    private static void executeMethods(Object classInstance, List<Method> methods) throws
-            InvocationTargetException, IllegalAccessException {
+    private static void executeMethods(Object classInstance, Method... methods) throws InvocationTargetException,
+            IllegalAccessException {
         for (Method method : methods) {
             method.invoke(classInstance);
         }
     }
 
-    private static void executeMethod(Object classInstance, Method method) throws InvocationTargetException,
-            IllegalAccessException {
-        method.invoke(classInstance);
-    }
-
-    //If @Before or @Test threw exception - execute @After anyway
+    //"Safe" @After execution (without throwing exception)
     private static void executeAftersWithoutThrowingException(Object classInstance, List<Method> afterMethods) {
         try {
-            for (Method afterMethod : afterMethods) {
-                afterMethod.invoke(classInstance);
-            }
+            executeMethods(classInstance, afterMethods.toArray(new Method[0]));
         } catch (Exception e) {
-            System.out.println("Exception in executeAftersWithoutThrowingException() " + e.getCause().toString());
+            printCauseStackTrace(e);
         }
+    }
+
+    private static void printCauseStackTrace(Exception exception) {
+        Throwable targetException = exception.getCause();
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        targetException.printStackTrace(pw);
+        System.out.println("Exception: " + sw);
     }
 }

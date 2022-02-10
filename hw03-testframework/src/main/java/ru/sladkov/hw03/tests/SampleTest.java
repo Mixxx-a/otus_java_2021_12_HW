@@ -1,4 +1,4 @@
-package ru.sladkov.hw03;
+package ru.sladkov.hw03.tests;
 
 import ru.sladkov.hw03.annotations.After;
 import ru.sladkov.hw03.annotations.Before;
