@@ -1,0 +1,19 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'ru.sladkov'
+
+apply plugin : "java"
+ext {
+    javaMainClass = "ru.sladkov.hw03.Main"
+}
+
+dependencies {
+    implementation('org.assertj:assertj-core')
+}
+
+application {
+    mainClass.set(javaMainClass)
+}
