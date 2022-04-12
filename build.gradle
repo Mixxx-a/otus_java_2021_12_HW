@@ -23,6 +23,9 @@ allprojects {
         mavenCentral()
     }
 
+    apply plugin: 'java'
+    compileJava {options.encoding = "UTF-8"}
+
     apply plugin: 'io.spring.dependency-management'
     dependencyManagement {
         dependencies {
