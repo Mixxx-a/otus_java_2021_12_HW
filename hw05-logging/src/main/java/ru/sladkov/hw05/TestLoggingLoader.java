@@ -6,45 +6,57 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
 
 class TestLoggingLoader {
 
-    private TestLoggingLoader() {}
+    private TestLoggingLoader() {
+    }
 
-    static TestLoggingInterface createClass(TestLoggingInterface testLoggingImpl) {
-        InvocationHandler invocationHandler = new MyInvocationHandler(testLoggingImpl);
+    static TestLoggingInterface createClass(TestLoggingInterface testLoggingInterface) {
+        InvocationHandler invocationHandler = new MyInvocationHandler(testLoggingInterface);
         return (TestLoggingInterface) Proxy.newProxyInstance(TestLoggingLoader.class.getClassLoader(),
                 new Class<?>[]{TestLoggingInterface.class}, invocationHandler);
     }
 
     static class MyInvocationHandler implements InvocationHandler {
 
-        private final TestLoggingInterface testLogging;
-        private final List<Method> loggedMethods = new ArrayList<>();
+        private final TestLoggingInterface testLoggingInterface;
+        private final Set<Method> loggedMethods = new HashSet<>();
 
-        MyInvocationHandler(TestLoggingInterface testLogging) {
-            this.testLogging = testLogging;
-            Method[] methods = testLogging.getClass().getDeclaredMethods();
-            for (Method method : methods) {
-                Annotation logAnnotation = method.getDeclaredAnnotation(Log.class);
-                if (logAnnotation != null) {
-                    this.loggedMethods.add(method);
+        MyInvocationHandler(TestLoggingInterface testLoggingInterface) {
+            this.testLoggingInterface = testLoggingInterface;
+            Method[] methods = testLoggingInterface.getClass().getDeclaredMethods();
+
+            Class<?>[] interfaces = testLoggingInterface.getClass().getInterfaces();
+            Optional<Class<?>> optionalTestLoggingInterfaze = Arrays.stream(interfaces)
+                    .filter(interfaze -> interfaze.getName().equals(TestLoggingInterface.class.getName()))
+                    .findFirst();
+            if (optionalTestLoggingInterfaze.isPresent()) {
+                Class<?> testLoggingInterfaze = optionalTestLoggingInterfaze.get();
+                for (Method method : methods) {
+                    Annotation logAnnotation = method.getDeclaredAnnotation(Log.class);
+                    if (logAnnotation != null) {
+                        try {
+                            Method loggedMethod = testLoggingInterfaze.getMethod(method.getName(), method.getParameterTypes());
+                            loggedMethods.add(loggedMethod);
+                        } catch (NoSuchMethodException e) {
+                            e.printStackTrace();
+                        }
+                    }
                 }
             }
-
         }
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-            Method implementedMethod = testLogging.getClass().getDeclaredMethod(method.getName(),
-                    method.getParameterTypes());
-            if (this.loggedMethods.contains(implementedMethod)) {
+            if (loggedMethods.contains(method)) {
                 System.out.println("executed method: " + method.getName() + ", param: " + Arrays.toString(args));
             }
-            return method.invoke(testLogging, args);
+            return method.invoke(testLoggingInterface, args);
         }
     }
 }
