@@ -1,7 +1,7 @@
 package ru.sladkov.hw05;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws NoSuchMethodException {
         TestLoggingInterface testLogging = TestLoggingLoader.createClass(new TestLoggingImpl());
         testLogging.calculation(6);
         testLogging.calculation(7, 3);

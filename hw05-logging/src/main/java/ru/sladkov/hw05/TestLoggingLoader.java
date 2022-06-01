@@ -16,7 +16,7 @@ class TestLoggingLoader {
     private TestLoggingLoader() {
     }
 
-    static TestLoggingInterface createClass(TestLoggingInterface testLoggingInterface) {
+    static TestLoggingInterface createClass(TestLoggingInterface testLoggingInterface) throws NoSuchMethodException {
         InvocationHandler invocationHandler = new MyInvocationHandler(testLoggingInterface);
         return (TestLoggingInterface) Proxy.newProxyInstance(TestLoggingLoader.class.getClassLoader(),
                 new Class<?>[]{TestLoggingInterface.class}, invocationHandler);
@@ -27,7 +27,7 @@ class TestLoggingLoader {
         private final TestLoggingInterface testLoggingInterface;
         private final Set<Method> loggedMethods = new HashSet<>();
 
-        MyInvocationHandler(TestLoggingInterface testLoggingInterface) {
+        MyInvocationHandler(TestLoggingInterface testLoggingInterface) throws NoSuchMethodException {
             this.testLoggingInterface = testLoggingInterface;
             Method[] methods = testLoggingInterface.getClass().getDeclaredMethods();
 
@@ -38,14 +38,9 @@ class TestLoggingLoader {
             if (optionalTestLoggingInterfaze.isPresent()) {
                 Class<?> testLoggingInterfaze = optionalTestLoggingInterfaze.get();
                 for (Method method : methods) {
-                    Annotation logAnnotation = method.getDeclaredAnnotation(Log.class);
-                    if (logAnnotation != null) {
-                        try {
-                            Method loggedMethod = testLoggingInterfaze.getMethod(method.getName(), method.getParameterTypes());
-                            loggedMethods.add(loggedMethod);
-                        } catch (NoSuchMethodException e) {
-                            e.printStackTrace();
-                        }
+                    if (method.isAnnotationPresent(Log.class)) {
+                        Method loggedMethod = testLoggingInterfaze.getMethod(method.getName(), method.getParameterTypes());
+                        loggedMethods.add(loggedMethod);
                     }
                 }
             }
