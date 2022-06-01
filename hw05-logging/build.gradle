@@ -1,0 +1,15 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'ru.sladkov'
+
+apply plugin : "java"
+ext {
+    javaMainClass = "ru.sladkov.hw05.Main"
+}
+
+application {
+    mainClass.set(javaMainClass)
+}
