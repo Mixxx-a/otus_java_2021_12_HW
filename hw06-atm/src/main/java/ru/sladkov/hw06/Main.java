@@ -1,6 +1,6 @@
 package ru.sladkov.hw06;
 
-import ru.sladkov.hw06.atm.AtmOperational;
+import ru.sladkov.hw06.atm.AtmOperations;
 import ru.sladkov.hw06.atm.BanknotePack;
 import ru.sladkov.hw06.atm.impl.ATM;
 import ru.sladkov.hw06.atm.impl.Banknote;
@@ -22,7 +22,7 @@ public class Main {
         BanknotePack pack4 = new BanknotePackImpl(banknote4, 2);
         BanknotePack pack5 = new BanknotePackImpl(banknote5, 0);
 
-        AtmOperational atm = new ATM(pack1, pack2, pack3, pack4, pack5);
+        AtmOperations atm = new ATM(pack1, pack2, pack3, pack4, pack5);
 
         atm.printBalance();
 

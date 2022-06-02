@@ -1,12 +1,12 @@
 package ru.sladkov.hw06.atm.impl;
 
-import ru.sladkov.hw06.atm.AtmOperational;
+import ru.sladkov.hw06.atm.AtmOperations;
 import ru.sladkov.hw06.atm.BanknotePack;
 import ru.sladkov.hw06.atm.NonPerformableOperation;
 
 import java.util.*;
 
-public class ATM implements AtmOperational {
+public class ATM implements AtmOperations {
     SortedMap<Integer, BanknotePack> packs = new TreeMap<>(Collections.reverseOrder());
 
     public ATM(BanknotePack... packs) {
