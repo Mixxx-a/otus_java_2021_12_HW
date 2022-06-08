@@ -1,0 +1,33 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+dependencies {
+    testImplementation ('org.junit.jupiter:junit-jupiter-api')
+    testImplementation ('org.junit.jupiter:junit-jupiter-engine')
+    testImplementation ('org.junit.jupiter:junit-jupiter-params')
+    testImplementation ('org.assertj:assertj-core')
+    testImplementation ('org.mockito:mockito-core')
+    testImplementation ('org.mockito:mockito-junit-jupiter')
+}
+
+test {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
+}
+
+apply plugin : "java"
+ext {
+    javaMainClass = "ru.otus.HomeWork"
+}
+
+application {
+    mainClass.set(javaMainClass)
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
