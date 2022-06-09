@@ -2,7 +2,6 @@ package ru.otus.processor.homework;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import ru.otus.model.Message;
 import ru.otus.model.ObjectForMessage;
@@ -32,7 +31,7 @@ public class ProcessorExceptionTest {
     @Test
     public void testProcessorExceptionEvenSecond() {
         Assertions.assertThrows(RuntimeException.class, () -> {
-            Processor processor = new ProcessorException(LocalDateTime.of(2022, 6, 6, 0, 0, 2));
+            Processor processor = new ProcessorException(() -> LocalDateTime.of(2022, 6, 6, 0, 0, 2));
             processor.process(message);
         });
     }
@@ -40,7 +39,7 @@ public class ProcessorExceptionTest {
     @Test
     public void testProcessorExceptionOddSecond() {
         Assertions.assertDoesNotThrow(() -> {
-            Processor processor = new ProcessorException(LocalDateTime.of(2022, 6, 6, 0, 0, 1));
+            Processor processor = new ProcessorException(() -> LocalDateTime.of(2022, 6, 6, 0, 0, 1));
             processor.process(message);
         });
     }

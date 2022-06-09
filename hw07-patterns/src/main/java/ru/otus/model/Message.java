@@ -1,6 +1,6 @@
 package ru.otus.model;
 
-public class Message {
+public class Message implements Cloneable {
     private final long id;
     private final String field1;
     private final String field2;
@@ -38,23 +38,6 @@ public class Message {
         this.field11 = field11;
         this.field12 = field12;
         this.field13 = field13;
-    }
-
-    public Message(Message msg) {
-        this.id = msg.getId();
-        this.field1 = msg.getField1();
-        this.field2 = msg.getField2();
-        this.field3 = msg.getField3();
-        this.field4 = msg.getField4();
-        this.field5 = msg.getField5();
-        this.field6 = msg.getField6();
-        this.field7 = msg.getField7();
-        this.field8 = msg.getField8();
-        this.field9 = msg.getField9();
-        this.field10 = msg.getField10();
-        this.field11 = msg.getField11();
-        this.field12 = msg.getField12();
-        this.field13 = new ObjectForMessage(msg.getField13());
     }
 
     public long getId() {
@@ -151,6 +134,13 @@ public class Message {
                 ", field12='" + field12 + '\'' +
                 ", field13='" + field13.toString() + '\'' +
                 '}';
+    }
+
+    @Override
+    public Message clone() {
+        return new Message(this.getId(), this.getField1(), this.getField2(), this.getField3(), this.getField4(), this.getField5(),
+                this.getField6(), this.getField7(), this.getField8(), this.getField9(), this.getField10(), this.getField11(),
+                this.getField12(), this.getField13().clone());
     }
 
     public static class Builder {

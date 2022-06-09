@@ -1,20 +1,20 @@
 package ru.otus.processor.homework;
 
+import ru.otus.DateTimeProvider;
 import ru.otus.model.Message;
 import ru.otus.processor.Processor;
 
-import java.time.LocalDateTime;
-
 public class ProcessorException implements Processor {
 
-    private final LocalDateTime time;
+    private final DateTimeProvider dateTimeProvider;
 
-    public ProcessorException(LocalDateTime time) {
-        this.time = time;
+    public ProcessorException(DateTimeProvider provider) {
+        this.dateTimeProvider = provider;
     }
+
     @Override
     public Message process(Message message) {
-        int second = time.getSecond();
+        int second = dateTimeProvider.getDate().getSecond();
         if (second % 2 == 0) {
             throw new RuntimeException();
         } else return message;

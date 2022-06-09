@@ -35,7 +35,7 @@ public class HomeWork {
            из элеменов "to do" создать new ComplexProcessor и обработать сообщение
          */
 
-        List<String> data = List.of("data1", "data2", "data3");
+        List<String> data = new ArrayList<>(List.of("data1", "data2", "data3"));
         ObjectForMessage objectForMessage = new ObjectForMessage();
         objectForMessage.setData(data);
 
@@ -47,7 +47,7 @@ public class HomeWork {
                 .field13(objectForMessage)
                 .build();
 
-        List<Processor> processors = List.of(new ProcessorSwap(), new ProcessorException(LocalDateTime.now()));
+        List<Processor> processors = List.of(new ProcessorSwap(), new ProcessorException(LocalDateTime::now));
 
         ComplexProcessor complexProcessor = new ComplexProcessor(processors, System.out::println);
         HistoryReader historyListener = new HistoryListener();
@@ -56,12 +56,12 @@ public class HomeWork {
         System.out.println("message:" + message);
 
         Message result = complexProcessor.handle(message);
-        System.out.println("result1:" + result);
+        System.out.println("result:" + result);
 
-        System.out.println("Change field 13 in message");
-        message.getField13().setData(new ArrayList<>());
+        System.out.println("Change field 13 in result");
+        result.getField13().setData(new ArrayList<>());
 
-        System.out.println("message:" + message);
+        System.out.println("changed result:" + result);
 
         System.out.println("history:" + historyListener.findMessageById(message.getId()));
     }
