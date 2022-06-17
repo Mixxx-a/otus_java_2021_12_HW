@@ -26,12 +26,6 @@ public class Phone {
         this.number = number;
     }
 
-//    public Phone(Long id, String number, Client client) {
-//        this.id = id;
-//        this.number = number;
-//        this.client = client;
-//    }
-
     public Long getId() {
         return id;
     }
@@ -55,16 +49,4 @@ public class Phone {
     public void setClient(Client client) {
         this.client = client;
     }
-
-//    @Override
-//    public boolean equals(Object o) {
-//        if (this == o) return true;
-//        if (!(o instanceof Phone )) return false;
-//        return id != null && id.equals(((Phone) o).getId());
-//    }
-//
-//    @Override
-//    public int hashCode() {
-//        return getClass().hashCode();
-//    }
 }
