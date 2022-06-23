@@ -1,0 +1,29 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+sourceCompatibility = JavaVersion.VERSION_17
+targetCompatibility = JavaVersion.VERSION_17
+
+dependencies {
+    dependencies {
+        implementation 'ch.qos.logback:logback-classic'
+        implementation 'org.flywaydb:flyway-core'
+        implementation 'com.zaxxer:HikariCP'
+        implementation 'org.postgresql:postgresql'
+
+        implementation 'ch.qos.logback:logback-classic'
+        implementation 'org.flywaydb:flyway-core'
+        implementation 'org.postgresql:postgresql'
+    }
+}
+
+apply plugin : "java"
+ext {
+    javaMainClass = "ru.otus.HomeWork"
+}
+
+application {
+    mainClass.set(javaMainClass)
+}
