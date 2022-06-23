@@ -49,6 +49,7 @@ public class MyCache<K, V> implements HwCache<K, V> {
         for (WeakReference<HwListener<K, V>> listenerReference : listeners) {
             HwListener<K, V> listener = listenerReference.get();
             if (listener != null) {
+                logger.info("call notify on " + listener);
                 listener.notify(key, value, action);
             }
         }
