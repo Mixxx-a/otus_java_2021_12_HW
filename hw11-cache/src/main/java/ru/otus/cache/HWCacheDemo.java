@@ -22,6 +22,9 @@ public class HWCacheDemo {
             }
         });
         cache.addListener((key, value, action) -> logger.info("key:{}, value:{}, action: {}", key, value, action));
+        HwListener<String, Integer> hwListener = (key, value, action) ->
+                logger.info("key:{}, value:{}, action: {}", key, value, action);
+        cache.addListener(hwListener);
 
         cache.put("1", 1);
         cache.remove("1");
@@ -29,5 +32,9 @@ public class HWCacheDemo {
         System.gc();
 
         cache.put("2", 2);
+
+        cache.removeListener(hwListener);
+
+        cache.put("3", 3);
     }
 }

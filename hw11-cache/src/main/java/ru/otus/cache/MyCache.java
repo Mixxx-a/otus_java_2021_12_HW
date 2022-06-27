@@ -43,6 +43,7 @@ public class MyCache<K, V> implements HwCache<K, V> {
 
     @Override
     public void removeListener(HwListener<K, V> listener) {
+        listeners.removeIf(currListener -> listener.equals(currListener.get()));
     }
 
     private void notifyListeners(K key, V value, String action) {
@@ -51,6 +52,8 @@ public class MyCache<K, V> implements HwCache<K, V> {
             if (listener != null) {
                 logger.info("call notify on " + listener);
                 listener.notify(key, value, action);
+            } else {
+                listeners.remove(listenerReference);
             }
         }
     }
