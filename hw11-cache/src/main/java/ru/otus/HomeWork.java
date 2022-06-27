@@ -3,6 +3,8 @@ package ru.otus;
 import org.flywaydb.core.Flyway;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.otus.cache.HwCache;
+import ru.otus.cache.MyCache;
 import ru.otus.orm.datasource.DriverManagerDataSource;
 import ru.otus.orm.entity.EntityClassMetaData;
 import ru.otus.orm.entity.EntitySQLMetaData;
@@ -10,11 +12,17 @@ import ru.otus.orm.entity.implementation.DataTemplateJdbc;
 import ru.otus.orm.entity.implementation.EntityClassMetaDataImpl;
 import ru.otus.orm.entity.implementation.EntitySQLMetaDataImpl;
 import ru.otus.orm.model.Client;
+import ru.otus.orm.repository.DataTemplate;
 import ru.otus.orm.repository.executor.DbExecutorImpl;
+import ru.otus.orm.service.DBServiceClient;
+import ru.otus.orm.service.DbServiceClientCacheImpl;
 import ru.otus.orm.service.DbServiceClientImpl;
+import ru.otus.orm.sessionmanager.TransactionRunner;
 import ru.otus.orm.sessionmanager.TransactionRunnerJdbc;
 
 import javax.sql.DataSource;
+import java.util.ArrayList;
+import java.util.List;
 
 public class HomeWork {
     private static final String URL = "jdbc:postgresql://localhost:5430/demoDB";
@@ -34,18 +42,72 @@ public class HomeWork {
         EntitySQLMetaData entitySQLMetaDataClient = new EntitySQLMetaDataImpl(entityClassMetaDataClient);
         var dataTemplateClient = new DataTemplateJdbc<>(dbExecutor, entitySQLMetaDataClient, entityClassMetaDataClient); //реализация DataTemplate, универсальная
 
-        var dbServiceClient = new DbServiceClientImpl(transactionRunner, dataTemplateClient);
-        dbServiceClient.saveClient(new Client("dbServiceFirst"));
+        testCache(transactionRunner, dataTemplateClient);
+        log.info("---------------------------------------------------------------");
+        runOperations(transactionRunner, dataTemplateClient, false);
+        log.info("---------------------------------------------------------------");
+        runOperations(transactionRunner, dataTemplateClient, true);
 
-        var clientSecond = dbServiceClient.saveClient(new Client("dbServiceSecond"));
-        var clientSecondSelected = dbServiceClient.getClient(clientSecond.getId())
-                .orElseThrow(() -> new RuntimeException("Client not found, id:" + clientSecond.getId()));
-        log.info("clientSecondSelected:{}", clientSecondSelected);
+    }
 
-        Client clientSecondUpdated = dbServiceClient.saveClient(new Client(2L, "dbServiceSecondUpdated"));
-        Client clientSecondUpdatedSelected = dbServiceClient.getClient(clientSecondUpdated.getId())
-                .orElseThrow(() -> new RuntimeException("Client not found, id:" + clientSecondUpdated.getId()));
-        log.info("clientSecondUpdatedSelected:{}", clientSecondUpdatedSelected);
+    private static void runOperations(TransactionRunner transactionRunner, DataTemplate<Client> dataTemplateClient,
+                                      boolean useCache) {
+        DBServiceClient dbServiceClient;
+        if (useCache) {
+            HwCache<String, Client> cache = new MyCache<>();
+            dbServiceClient = new DbServiceClientCacheImpl(transactionRunner, dataTemplateClient, cache);
+        } else {
+            dbServiceClient = new DbServiceClientImpl(transactionRunner, dataTemplateClient);
+        }
+
+        log.info("Use cache: " + useCache);
+
+        long time = System.currentTimeMillis();
+        var client = dbServiceClient.saveClient(new Client("dbServiceFirst"));
+        log.info("save client in {} ms", System.currentTimeMillis() - time);
+
+        time = System.currentTimeMillis();
+        var clientSelected = dbServiceClient.getClient(client.getId())
+                .orElseThrow(() -> new RuntimeException("Client not found, id:" + client.getId()));
+        log.info("clientSelected:{}, in {} ms", clientSelected, System.currentTimeMillis() - time);
+
+        client.setName("dbServiceFirstUpdated");
+        dbServiceClient.saveClient(client);
+
+        time = System.currentTimeMillis();
+        Client clientUpdatedSelected = dbServiceClient.getClient(client.getId())
+                .orElseThrow(() -> new RuntimeException("Client not found, id:" + client.getId()));
+        log.info("clientUpdatedSelected:{}, in {} ms", clientUpdatedSelected, System.currentTimeMillis() - time);
+    }
+
+    private static void testCache(TransactionRunner transactionRunner, DataTemplate<Client> dataTemplateClient) {
+        HwCache<String, Client> cache = new MyCache<>();
+        DBServiceClient dbServiceClient = new DbServiceClientCacheImpl(transactionRunner, dataTemplateClient, cache);
+
+        List<Client> clients = new ArrayList<>();
+
+        for (int i = 0; i < 1_000; i++) {
+            clients.add(dbServiceClient.saveClient(new Client("client" + i)));
+        }
+
+        long time = System.currentTimeMillis();
+        for (Client client : clients) {
+            dbServiceClient.getClient(client.getId())
+                    .orElseThrow(() -> new RuntimeException("Client not found, id:" + client.getId()));
+        }
+        long timeSelect = System.currentTimeMillis() - time;
+
+        System.gc();
+
+        time = System.currentTimeMillis();
+        for (Client client : clients) {
+            dbServiceClient.getClient(client.getId())
+                    .orElseThrow(() -> new RuntimeException("Client not found, id:" + client.getId()));
+        }
+        long timeSelectAfterGc = System.currentTimeMillis() - time;
+
+        log.info("Select from cache in {} ms", timeSelect);
+        log.info("Select after gc in {} ms", timeSelectAfterGc);
     }
 
     private static void flywayMigrations(DataSource dataSource) {
