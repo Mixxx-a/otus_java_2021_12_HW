@@ -61,7 +61,7 @@ public class WebServerImpl implements WebServer {
 
         HandlerList handlers = new HandlerList();
         handlers.addHandler(resourceHandler);
-        handlers.addHandler(applySecurity(servletContextHandler, CLIENTS_PATH, API_CLIENT));
+        handlers.addHandler(applySecurity(servletContextHandler, CLIENTS_PATH, API_CLIENT_PATH));
 
         server.setHandler(handlers);
     }
@@ -77,7 +77,7 @@ public class WebServerImpl implements WebServer {
     private ServletContextHandler createServletContextHandler() {
         ServletContextHandler servletContextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
         servletContextHandler.addServlet(new ServletHolder(new ClientsServlet(templateProcessor, dbServiceClient)), CLIENTS_PATH);
-        servletContextHandler.addServlet(new ServletHolder(new ClientsApiServlet(dbServiceClient)), API_CLIENT);
+        servletContextHandler.addServlet(new ServletHolder(new ClientsApiServlet(dbServiceClient)), API_CLIENT_PATH);
         return servletContextHandler;
     }
 
