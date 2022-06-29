@@ -11,6 +11,10 @@ dependencies {
     implementation('org.flywaydb:flyway-core')
 
     implementation("org.postgresql:postgresql")
+
+    implementation("org.eclipse.jetty:jetty-servlet")
+    implementation("org.eclipse.jetty:jetty-server")
+    implementation("org.freemarker:freemarker")
 }
 
 test {
