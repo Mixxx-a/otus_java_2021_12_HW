@@ -1,12 +1,12 @@
 package ru.otus.appcontainer;
 
+import ru.otus.appcontainer.api.AppComponent;
 import ru.otus.appcontainer.api.AppComponentsContainer;
 import ru.otus.appcontainer.api.AppComponentsContainerConfig;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.*;
 
 public class AppComponentsContainerImpl implements AppComponentsContainer {
 
@@ -18,8 +18,42 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
     }
 
     private void processConfig(Class<?> configClass) {
+        List<Method> methods = getComponentsInitializationMethods(configClass);
+        try {
+            Object config = configClass.getConstructor().newInstance();
+            for (Method method : methods) {
+                List<Object> arguments = new ArrayList<>();
+                Class<?>[] parameterTypes = method.getParameterTypes();
+                for (Class<?> clazz : parameterTypes) {
+                    Object appComponent = getAppComponent(clazz);
+                    arguments.add(appComponent);
+                }
+                Object newInstance = method.invoke(config, arguments.toArray());
+                appComponents.add(newInstance);
+                appComponentsByName.put(method.getAnnotation(AppComponent.class).name(), newInstance);
+            }
+        } catch (InvocationTargetException | IllegalAccessException | InstantiationException |
+                 NoSuchMethodException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private List<Method> getComponentsInitializationMethods(Class<?> configClass) {
+        List<Method> componentsInitializationMethods = new ArrayList<>();
         checkConfigClass(configClass);
-        // You code here...
+        Method[] methods = configClass.getDeclaredMethods();
+        for (Method method : methods) {
+            if (method.isAnnotationPresent(AppComponent.class)) {
+                componentsInitializationMethods.add(method);
+            }
+        }
+        componentsInitializationMethods.sort((leftMethod, rightMethod) -> {
+            int orderLeft = leftMethod.getAnnotation(AppComponent.class).order();
+            int orderRight = rightMethod.getAnnotation(AppComponent.class).order();
+            return orderLeft - orderRight;
+        });
+
+        return componentsInitializationMethods;
     }
 
     private void checkConfigClass(Class<?> configClass) {
@@ -30,11 +64,24 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
 
     @Override
     public <C> C getAppComponent(Class<C> componentClass) {
-        return null;
+        for (Object component : appComponents) {
+            if (componentClass.equals(component.getClass())) {
+                return (C) component;
+            }
+            Class<?>[] implementedInterfaces = component.getClass().getInterfaces();
+            Optional<Class<?>> componentClassInterface = Arrays.stream(implementedInterfaces)
+                    .filter(interfaze -> interfaze.equals(componentClass)).findFirst();
+            if (componentClassInterface.isPresent()) {
+                return (C) component;
+            }
+        }
+        throw new RuntimeException("Can't find component " + componentClass.getName());
     }
 
     @Override
     public <C> C getAppComponent(String componentName) {
-        return null;
+        if (appComponentsByName.containsKey(componentName)) {
+            return (C) appComponentsByName.get(componentName);
+        } else throw new RuntimeException("Can't find component with name " + componentName);
     }
 }
