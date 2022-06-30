@@ -15,7 +15,7 @@ include 'hw12-webserver'
 include 'hw13-ioc'
 
 
-
+include 'hw16-concurrentCollections'
 
 //gradlew.bat clean run -p <moduleName>
 
