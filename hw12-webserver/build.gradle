@@ -12,6 +12,7 @@ dependencies {
 
     implementation("org.postgresql:postgresql")
 
+    implementation("com.google.code.gson:gson")
     implementation("org.eclipse.jetty:jetty-servlet")
     implementation("org.eclipse.jetty:jetty-server")
     implementation("org.freemarker:freemarker")

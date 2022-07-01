@@ -1,5 +1,6 @@
 package ru.otus.server;
 
+import com.google.gson.Gson;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.HandlerList;
@@ -28,12 +29,14 @@ public class WebServerImpl implements WebServer {
     private final Server server;
     private final AuthService authService;
     private final DBServiceClient dbServiceClient;
+    private final Gson gson;
 
     public WebServerImpl(int port, TemplateProcessor templateProcessor, AuthService authService,
-                         DBServiceClient dbServiceClient) {
+                         DBServiceClient dbServiceClient, Gson gson) {
         this.templateProcessor = templateProcessor;
         this.authService = authService;
         this.dbServiceClient = dbServiceClient;
+        this.gson = gson;
         server = new Server(port);
     }
 
@@ -77,7 +80,7 @@ public class WebServerImpl implements WebServer {
     private ServletContextHandler createServletContextHandler() {
         ServletContextHandler servletContextHandler = new ServletContextHandler(ServletContextHandler.SESSIONS);
         servletContextHandler.addServlet(new ServletHolder(new ClientsServlet(templateProcessor, dbServiceClient)), CLIENTS_PATH);
-        servletContextHandler.addServlet(new ServletHolder(new ClientsApiServlet(dbServiceClient)), API_CLIENT_PATH);
+        servletContextHandler.addServlet(new ServletHolder(new ClientsApiServlet(dbServiceClient, gson)), API_CLIENT_PATH);
         return servletContextHandler;
     }
 

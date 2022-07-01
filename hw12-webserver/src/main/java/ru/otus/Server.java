@@ -1,5 +1,7 @@
 package ru.otus;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.hibernate.cfg.Configuration;
 import ru.otus.core.repository.DataTemplateHibernate;
 import ru.otus.core.repository.HibernateUtils;
@@ -39,8 +41,9 @@ public class Server {
 
         TemplateProcessor templateProcessor = new TemplateProcessorImpl(TEMPLATES_DIR);
         AuthService authService = new AuthServiceImpl();
+        Gson gson = new GsonBuilder().serializeNulls().setPrettyPrinting().excludeFieldsWithoutExposeAnnotation().create();
 
-        WebServer webServer = new WebServerImpl(WEB_SERVER_PORT, templateProcessor, authService, dbServiceClient);
+        WebServer webServer = new WebServerImpl(WEB_SERVER_PORT, templateProcessor, authService, dbServiceClient, gson);
         webServer.start();
         webServer.join();
     }
