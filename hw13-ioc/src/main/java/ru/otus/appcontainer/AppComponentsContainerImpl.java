@@ -32,13 +32,8 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
                     continue;
                 }
 
-                List<Object> arguments = new ArrayList<>();
-                Class<?>[] parameterTypes = method.getParameterTypes();
-                for (Class<?> clazz : parameterTypes) {
-                    Object appComponent = getAppComponent(clazz);
-                    arguments.add(appComponent);
-                }
-                Object newInstance = method.invoke(config, arguments.toArray());
+                Object[] arguments = getMethodArguments(method);
+                Object newInstance = method.invoke(config, arguments);
                 appComponents.add(newInstance);
                 appComponentsByName.put(componentName, newInstance);
             }
@@ -61,6 +56,16 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
         if (!configClass.isAnnotationPresent(AppComponentsContainerConfig.class)) {
             throw new IllegalArgumentException(String.format("Given class is not config %s", configClass.getName()));
         }
+    }
+
+    private Object[] getMethodArguments(Method method) {
+        Class<?>[] parameterTypes = method.getParameterTypes();
+        int parameterTypesLength = parameterTypes.length;
+        Object[] arguments = new Object[parameterTypesLength];
+        for (int i = 0; i < parameterTypesLength; i++) {
+            arguments[i] = getAppComponent(parameterTypes[i]);
+        }
+        return arguments;
     }
 
     @Override
