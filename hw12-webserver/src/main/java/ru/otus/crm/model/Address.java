@@ -1,5 +1,7 @@
 package ru.otus.crm.model;
 
+import com.google.gson.annotations.Expose;
+
 import javax.persistence.*;
 
 @Entity
@@ -12,6 +14,7 @@ public class Address {
     private Long id;
 
     @Column(name = "street")
+    @Expose
     private String street;
 
     public Address() {
