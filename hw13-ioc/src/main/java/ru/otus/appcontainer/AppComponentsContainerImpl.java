@@ -1,5 +1,8 @@
 package ru.otus.appcontainer;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import ru.otus.ContainerInitializationException;
 import ru.otus.appcontainer.api.AppComponent;
 import ru.otus.appcontainer.api.AppComponentsContainer;
 import ru.otus.appcontainer.api.AppComponentsContainerConfig;
@@ -9,19 +12,26 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 public class AppComponentsContainerImpl implements AppComponentsContainer {
+    private static final Logger logger = LoggerFactory.getLogger(AppComponentsContainerImpl.class);
 
     private final List<Object> appComponents = new ArrayList<>();
     private final Map<String, Object> appComponentsByName = new HashMap<>();
 
-    public AppComponentsContainerImpl(Class<?> initialConfigClass) {
+    public AppComponentsContainerImpl(Class<?> initialConfigClass) throws ContainerInitializationException {
         processConfig(initialConfigClass);
     }
 
-    private void processConfig(Class<?> configClass) {
+    private void processConfig(Class<?> configClass) throws ContainerInitializationException {
         List<Method> methods = getComponentsInitializationMethods(configClass);
         try {
             Object config = configClass.getConstructor().newInstance();
             for (Method method : methods) {
+                String componentName = method.getAnnotation(AppComponent.class).name();
+                if (appComponentsByName.containsKey(componentName)) {
+                    logger.warn("Component with name {} already exists, skipping", componentName);
+                    continue;
+                }
+
                 List<Object> arguments = new ArrayList<>();
                 Class<?>[] parameterTypes = method.getParameterTypes();
                 for (Class<?> clazz : parameterTypes) {
@@ -30,30 +40,21 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
                 }
                 Object newInstance = method.invoke(config, arguments.toArray());
                 appComponents.add(newInstance);
-                appComponentsByName.put(method.getAnnotation(AppComponent.class).name(), newInstance);
+                appComponentsByName.put(componentName, newInstance);
             }
         } catch (InvocationTargetException | IllegalAccessException | InstantiationException |
                  NoSuchMethodException e) {
-            e.printStackTrace();
+            throw new ContainerInitializationException("Can't process config", e);
         }
     }
 
     private List<Method> getComponentsInitializationMethods(Class<?> configClass) {
-        List<Method> componentsInitializationMethods = new ArrayList<>();
         checkConfigClass(configClass);
         Method[] methods = configClass.getDeclaredMethods();
-        for (Method method : methods) {
-            if (method.isAnnotationPresent(AppComponent.class)) {
-                componentsInitializationMethods.add(method);
-            }
-        }
-        componentsInitializationMethods.sort((leftMethod, rightMethod) -> {
-            int orderLeft = leftMethod.getAnnotation(AppComponent.class).order();
-            int orderRight = rightMethod.getAnnotation(AppComponent.class).order();
-            return orderLeft - orderRight;
-        });
-
-        return componentsInitializationMethods;
+        return Arrays.stream(methods)
+                .filter(method -> method.isAnnotationPresent(AppComponent.class))
+                .sorted(Comparator.comparing(method -> method.getAnnotation(AppComponent.class).order()))
+                .toList();
     }
 
     private void checkConfigClass(Class<?> configClass) {
@@ -65,13 +66,7 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
     @Override
     public <C> C getAppComponent(Class<C> componentClass) {
         for (Object component : appComponents) {
-            if (componentClass.equals(component.getClass())) {
-                return (C) component;
-            }
-            Class<?>[] implementedInterfaces = component.getClass().getInterfaces();
-            Optional<Class<?>> componentClassInterface = Arrays.stream(implementedInterfaces)
-                    .filter(interfaze -> interfaze.equals(componentClass)).findFirst();
-            if (componentClassInterface.isPresent()) {
+            if (componentClass.isAssignableFrom(component.getClass())) {
                 return (C) component;
             }
         }
