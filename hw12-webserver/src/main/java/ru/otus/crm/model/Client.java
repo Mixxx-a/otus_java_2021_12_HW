@@ -1,6 +1,8 @@
 package ru.otus.crm.model;
 
 
+import com.google.gson.annotations.Expose;
+
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,13 +18,16 @@ public class Client implements Cloneable {
     private Long id;
 
     @Column(name = "name")
+    @Expose
     private String name;
 
     @OneToOne(targetEntity = Address.class, cascade = CascadeType.ALL)
     @JoinColumn(name = "address_id")
+    @Expose
     private Address address;
 
     @OneToMany(targetEntity = Phone.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "client")
+    @Expose
     private List<Phone> phones = new ArrayList<>();
 
     public Client() {

@@ -1,5 +1,7 @@
 package ru.otus.crm.model;
 
+import com.google.gson.annotations.Expose;
+
 import javax.persistence.*;
 
 @Entity
@@ -12,6 +14,7 @@ public class Phone {
     private Long id;
 
     @Column(name = "number")
+    @Expose
     private String number;
 
     @ManyToOne(targetEntity = Client.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
