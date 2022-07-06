@@ -1,67 +1,36 @@
 package ru.otus.crm.model;
 
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceCreator;
+import org.springframework.data.relational.core.mapping.MappedCollection;
+import org.springframework.data.relational.core.mapping.Table;
 
-import com.google.gson.annotations.Expose;
+import java.util.Set;
 
-import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
-
-@Entity
-@Table(name = "client")
-public class Client implements Cloneable {
+@Table("client")
+public class Client {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "client_generator")
-    @SequenceGenerator(name = "client_generator", sequenceName = "client_sequence", allocationSize = 1)
-    @Column(name = "id")
     private Long id;
-
-    @Column(name = "name")
-    @Expose
     private String name;
-
-    @OneToOne(targetEntity = Address.class, cascade = CascadeType.ALL)
-    @JoinColumn(name = "address_id")
-    @Expose
+    @MappedCollection(idColumn = "client_id")
     private Address address;
-
-    @OneToMany(targetEntity = Phone.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER, mappedBy = "client")
-    @Expose
-    private List<Phone> phones = new ArrayList<>();
+    @MappedCollection(idColumn = "client_id")
+    private Set<Phone> phones;
 
     public Client() {
     }
 
     public Client(String name) {
-        this.id = null;
-        this.name = name;
+        this(null, name, null, null);
     }
 
-    public Client(Long id, String name) {
-        this.id = id;
-        this.name = name;
-    }
-
-    public Client(Long id, String name, Address address, List<Phone> phones) {
+    @PersistenceCreator
+    public Client(Long id, String name, Address address, Set<Phone> phones) {
         this.id = id;
         this.name = name;
         this.address = address;
-        phones.forEach(this::addPhone);
-    }
-
-    @Override
-    public Client clone() {
-        Client clone = new Client(this.id, this.name);
-        if (this.address != null) {
-            clone.setAddress(new Address(this.address.getId(), this.address.getStreet()));
-        }
-        if (!this.phones.isEmpty()) {
-            for (Phone phone : this.phones) {
-                clone.addPhone(new Phone(phone.getId(), phone.getNumber()));
-            }
-        }
-        return clone;
+        this.phones = phones;
     }
 
     public Long getId() {
@@ -88,22 +57,20 @@ public class Client implements Cloneable {
         this.address = address;
     }
 
-    public List<Phone> getPhones() {
+    public Set<Phone> getPhones() {
         return phones;
     }
 
-    public void setPhones(List<Phone> phones) {
+    public void setPhones(Set<Phone> phones) {
         this.phones = phones;
     }
 
     public void addPhone(Phone phone) {
         phones.add(phone);
-        phone.setClient(this);
     }
 
     public void removePhone(Phone phone) {
         phones.remove(phone);
-        phone.setClient(null);
     }
 
     @Override

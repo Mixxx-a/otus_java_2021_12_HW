@@ -1,4 +1,4 @@
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml">
 <head>
     <title>Admin Page</title>
     <script>
@@ -7,8 +7,12 @@
             const nameContainer = document.getElementById('clientName');
             const addressContainer = document.getElementById('clientAddress');
             const phoneContainer = document.getElementById('clientPhone');
-            const response = await fetch('/api/client', {
+            const response = await fetch('/client/save', {
                 method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({
                     name: nameContainer.value,
                     address: addressContainer.value,
@@ -40,24 +44,14 @@
     </tr>
     </thead>
     <tbody>
-    <#list clients as client>
-        <tr>
-            <td>${client.id}</td>
-            <td>${client.name}</td>
-            <td>
-                <#if client.address??>
-                    ${client.address.street}
-                </#if>
-            </td>
-            <td>
-                <#list client.phones as phone>
-                    ${phone.number}
-                </#list>
-            </td>
-        </tr>
-    <#else>
-        <p>No clients</p>
-    </#list>
+    <tr th:each="client : ${clients}">
+        <td th:text="${client.id}"></td>
+        <td th:text="${client.name}"></td>
+        <td th:text="${client?.address?.street}"></td>
+        <td th:each="phone : ${client?.phones}">
+            <span th:text="${phone?.number}"></span>
+        </td>
+    </tr>
     </tbody>
 </table>
 </body>

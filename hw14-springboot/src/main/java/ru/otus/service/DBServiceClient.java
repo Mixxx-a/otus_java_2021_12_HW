@@ -1,4 +1,4 @@
-package ru.otus.crm.service;
+package ru.otus.service;
 
 
 import ru.otus.crm.model.Client;
@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface DBServiceClient {
 
-    Client saveClient(Client client);
+    Client saveClient(String name, String addressStreet, List<String> phoneNumbers);
 
     Optional<Client> getClient(long id);
 
