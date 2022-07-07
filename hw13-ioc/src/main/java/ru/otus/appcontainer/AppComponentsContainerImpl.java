@@ -28,8 +28,8 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
             for (Method method : methods) {
                 String componentName = method.getAnnotation(AppComponent.class).name();
                 if (appComponentsByName.containsKey(componentName)) {
-                    logger.warn("Component with name {} already exists, skipping", componentName);
-                    continue;
+                    throw new ContainerInitializationException("Component with name " + componentName + " " +
+                            "already exists in container");
                 }
 
                 Object[] arguments = getMethodArguments(method);
@@ -82,6 +82,8 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
     public <C> C getAppComponent(String componentName) {
         if (appComponentsByName.containsKey(componentName)) {
             return (C) appComponentsByName.get(componentName);
-        } else throw new RuntimeException("Can't find component with name " + componentName);
+        } else {
+            throw new RuntimeException("Can't find component with name " + componentName);
+        }
     }
 }
