@@ -16,6 +16,7 @@ include 'hw13-ioc'
 include 'hw14-springboot'
 include 'hw15-threads'
 include 'hw16-concurrentCollections'
+include 'hw17-grpc'
 
 //gradlew.bat clean run -p <moduleName>
 
