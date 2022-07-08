@@ -9,26 +9,43 @@ create table client
  */
 
 -- Для @GeneratedValue(strategy = GenerationType.SEQUENCE)
-create sequence client_sequence start with 1 increment by 1;
-create sequence address_sequence start with 1 increment by 1;
-create sequence phone_sequence start with 1 increment by 1;
+--create sequence client_sequence start with 1 increment by 1;
+--create sequence address_sequence start with 1 increment by 1;
+--create sequence phone_sequence start with 1 increment by 1;
 
 create table client
 (
-    id   bigint not null primary key,
-    name varchar(50),
-    address_id bigint
+    id   bigserial not null primary key,
+    name varchar(50)
 );
 
 create table address
 (
-    id   bigint not null primary key,
-    street varchar(50)
+    id   bigserial not null primary key,
+    street varchar(50),
+    client_id bigint references client(id)
 );
 
 create table phone
 (
-    id   bigint not null primary key,
+    id   bigserial not null primary key,
     number varchar(50),
-    client_id bigint
+    client_id bigint references client(id)
 );
+
+insert into client (name)
+values
+    ('AAAname'),
+    ('BBBname'),
+    ('CCCname');
+
+insert into address (street, client_id)
+    values
+    ('AAAstreet', 1),
+    ('BBBstreet', 2);
+
+insert into phone (number, client_id)
+    values
+    ('11111', 1),
+    ('22222', 2),
+    ('33333', 2);

@@ -1,32 +1,28 @@
 package ru.otus.crm.model;
 
-import com.google.gson.annotations.Expose;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceCreator;
+import org.springframework.data.relational.core.mapping.Table;
 
-import javax.persistence.*;
-
-@Entity
-@Table(name = "phone")
+@Table("phone")
 public class Phone {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "phone_generator")
-    @SequenceGenerator(name = "phone_generator", sequenceName = "phone_sequence", allocationSize = 1)
-    @Column(name = "id")
     private Long id;
-
-    @Column(name = "number")
-    @Expose
     private String number;
-
-    @ManyToOne(targetEntity = Client.class, cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-//    @JoinColumn(name = "client_id", referencedColumnName = "id")
-    private Client client;
+    private Long clientId;
 
     public Phone() {
     }
 
-    public Phone(Long id, String number) {
+    public Phone(String number, Long clientId) {
+        this(null, number, clientId);
+    }
+
+    @PersistenceCreator
+    public Phone(Long id, String number, Long clientId) {
         this.id = id;
         this.number = number;
+        this.clientId = clientId;
     }
 
     public Long getId() {
@@ -45,11 +41,11 @@ public class Phone {
         this.number = number;
     }
 
-    public Client getClient() {
-        return client;
+    public Long getClientId() {
+        return clientId;
     }
 
-    public void setClient(Client client) {
-        this.client = client;
+    public void setClientId(Long clientId) {
+        this.clientId = clientId;
     }
 }

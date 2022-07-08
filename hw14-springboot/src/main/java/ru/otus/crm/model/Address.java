@@ -1,28 +1,28 @@
 package ru.otus.crm.model;
 
-import com.google.gson.annotations.Expose;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.PersistenceCreator;
+import org.springframework.data.relational.core.mapping.Table;
 
-import javax.persistence.*;
-
-@Entity
-@Table(name = "address")
+@Table("address")
 public class Address {
     @Id
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "address_generator")
-    @SequenceGenerator(name = "address_generator", sequenceName = "address_sequence", allocationSize = 1)
-    @Column(name = "id")
     private Long id;
-
-    @Column(name = "street")
-    @Expose
     private String street;
+    private Long clientId;
 
     public Address() {
     }
 
-    public Address(Long id, String street) {
+    public Address(String street, Long clientId) {
+        this(null, street, clientId);
+    }
+
+    @PersistenceCreator
+    public Address(Long id, String street, Long clientId) {
         this.id = id;
         this.street = street;
+        this.clientId = clientId;
     }
 
     public Long getId() {
@@ -41,5 +41,11 @@ public class Address {
         this.street = street;
     }
 
+    public Long getClientId() {
+        return clientId;
+    }
 
+    public void setClientId(Long clientId) {
+        this.clientId = clientId;
+    }
 }
