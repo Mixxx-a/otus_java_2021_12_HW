@@ -1,0 +1,59 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.w3.org/1999/xhtml">
+<head>
+    <title>Admin Page</title>
+    <script>
+        async function createClient() {
+            const responseContainer = document.getElementById('createClientResponseContainer');
+            const nameContainer = document.getElementById('clientName');
+            const addressContainer = document.getElementById('clientAddress');
+            const phoneContainer = document.getElementById('clientPhone');
+            const response = await fetch('/client/save', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: nameContainer.value,
+                    address: addressContainer.value,
+                    phone: phoneContainer.value
+                })
+            });
+            const newClient = await response.json();
+            responseContainer.innerHTML = JSON.stringify(newClient);
+        }
+    </script>
+</head>
+
+<body>
+<h4>Create Client</h4>
+<input type="text" id="clientName" placeholder="Input name">
+<input type="text" id="clientAddress" placeholder="Input address (optional)">
+<input type="text" id="clientPhone" placeholder="Input phone (optional)">
+<button onclick="createClient()">Create</button>
+<pre id = "createClientResponseContainer"></pre>
+
+<h4>List of clients</h4>
+<table style="width: 400px">
+    <thead>
+    <tr>
+        <td style="width: 50px">Id</td>
+        <td style="width: 150px">Name</td>
+        <td style="width: 150px">Street</td>
+        <td style="width: 150px">Phone(s)</td>
+    </tr>
+    </thead>
+    <tbody>
+    <tr th:each="client : ${clients}">
+        <td th:text="${client.id}"></td>
+        <td th:text="${client.name}"></td>
+        <td th:text="${client?.address?.street}"></td>
+        <td th:each="phone : ${client?.phones}">
+            <span th:text="${phone?.number}"></span>
+        </td>
+    </tr>
+    </tbody>
+</table>
+</body>
+
+</html>
