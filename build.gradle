@@ -31,10 +31,14 @@ allprojects {
         dependencies {
             imports {
                 mavenBom("org.springframework.boot:spring-boot-dependencies:2.6.4")
+                mavenBom("com.google.protobuf:protobuf-bom:3.21.1")
             }
             dependency("com.google.guava:guava:${Versions.guava}")
             dependency("org.testcontainers:junit-jupiter:${Versions.testcontainers}")
             dependency("org.testcontainers:postgresql:${Versions.testcontainers}")
+            dependency("io.grpc:grpc-netty:${Versions.grpc}")
+            dependency("io.grpc:grpc-protobuf:${Versions.grpc}")
+            dependency("io.grpc:grpc-stub:${Versions.grpc}")
         }
     }
 
