@@ -2,45 +2,52 @@ package ru.sladkov.hw17.service;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import ru.sladkov.protobuf.generated.BorderValuesRequest;
+import ru.sladkov.protobuf.generated.NumberServiceGrpc;
 
-public class ClientService implements Runnable {
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+
+public class ClientService {
     private final static Logger logger = LoggerFactory.getLogger(ClientService.class);
+    private final static long FIRST_VALUE = 0L;
+    private final static long LAST_VALUE = 30L;
+    private final static int CYCLE_ITERATIONS = 50;
+    private final static int PERIOD_SECONDS = 1;
 
-    private long currentValue = 0;
-    private long lastServerValue = 0;
-    private boolean isNew = false;
+    private final NumberServiceGrpc.NumberServiceStub stub;
 
-    public void count() {
-        for (int i = 0; i < 50; i++) {
-            long value;
-            if (isNew) {
-                value = currentValue + lastServerValue + 1;
-                isNew = false;
-            } else {
-                value = currentValue + 1;
-            }
+    public ClientService(NumberServiceGrpc.NumberServiceStub stub) {
+        this.stub = stub;
+    }
 
+    public void action() {
+        BorderValuesRequest borderValuesRequest = BorderValuesRequest.newBuilder()
+                .setFirstValue(FIRST_VALUE)
+                .setLastValue(LAST_VALUE)
+                .build();
+        NumberClientObserver observer = new NumberClientObserver();
+
+        ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+        AtomicInteger iteration = new AtomicInteger(0);
+        AtomicLong currentValue = new AtomicLong(0L);
+        Runnable task = () -> {
+            long lastServerValue = observer.getLastValueAndReset();
+            long value = currentValue.get() + lastServerValue + 1;
             logger.info("currentValue: " + value);
-            currentValue = value;
+            currentValue.set(value);
 
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
+            int currIteration = iteration.incrementAndGet();
+            if (currIteration == CYCLE_ITERATIONS) {
+                logger.info("cycle completed");
+                executorService.shutdown();
             }
-        }
-    }
+        };
 
-    public void setLastServerValue(long value) {
-        this.lastServerValue = value;
-    }
-
-    public void setIsNew(boolean isNew) {
-        this.isNew = isNew;
-    }
-
-    @Override
-    public void run() {
-        count();
+        stub.getNumbers(borderValuesRequest, observer);
+        executorService.scheduleAtFixedRate(task, 0, PERIOD_SECONDS, TimeUnit.SECONDS);
     }
 }
