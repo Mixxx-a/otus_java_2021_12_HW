@@ -17,8 +17,8 @@ include 'hw14-springboot'
 include 'hw15-threads'
 include 'hw16-concurrentCollections'
 include 'hw17-grpc'
-include 'hw18-springwebflux'
+include 'hw18-springwebflux:client'
+include 'hw18-springwebflux:dbService'
 
 //gradlew.bat clean run -p <moduleName>
-
 

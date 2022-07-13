@@ -38,6 +38,8 @@ values
     ('AAAname'),
     ('BBBname'),
     ('CCCname');
+    ('DDDname');
+    ('EEEname');
 
 insert into address (street, client_id)
     values

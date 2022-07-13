@@ -33,7 +33,7 @@ public class DbServiceClientImpl implements DBServiceClient {
     }
 
     @Override
-    public Client saveClient(String name, String addressStreet, List<String> phoneNumbers) {
+    public Client saveClient(String name, String addressStreet, Set<String> phoneNumbers) {
         return transactionManager.doInTransaction(() -> {
             Client client = clientRepository.save(new Client(name));
 
