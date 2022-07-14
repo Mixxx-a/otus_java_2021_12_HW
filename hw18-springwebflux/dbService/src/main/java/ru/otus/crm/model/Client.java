@@ -6,6 +6,7 @@ import org.springframework.data.relational.core.mapping.MappedCollection;
 import org.springframework.data.relational.core.mapping.Table;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Table("client")
 public class Client {
@@ -71,6 +72,18 @@ public class Client {
 
     public void removePhone(Phone phone) {
         phones.remove(phone);
+    }
+
+    public String getStreet() {
+        if (this.getAddress() != null) {
+            return this.getAddress().getStreet();
+        } else return null;
+    }
+
+    public Set<String> getPhonesStrings() {
+        if (this.getPhones() != null) {
+            return this.getPhones().stream().map(Phone::getNumber).collect(Collectors.toSet());
+        } else return null;
     }
 
     @Override
