@@ -37,8 +37,8 @@ insert into client (name)
 values
     ('AAAname'),
     ('BBBname'),
-    ('CCCname');
-    ('DDDname');
+    ('CCCname'),
+    ('DDDname'),
     ('EEEname');
 
 insert into address (street, client_id)
