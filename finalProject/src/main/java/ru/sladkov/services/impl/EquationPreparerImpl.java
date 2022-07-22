@@ -1,5 +1,6 @@
 package ru.sladkov.services.impl;
 
+import ru.sladkov.appcontainer.annotations.AppComponent;
 import ru.sladkov.model.DivisionEquation;
 import ru.sladkov.model.Equation;
 import ru.sladkov.model.MultiplicationEquation;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@AppComponent(name = "equationPreparer", interfaze = EquationPreparer.class)
 public class EquationPreparerImpl implements EquationPreparer {
     @Override
     public List<Equation> prepareEquationsFor(int base) {

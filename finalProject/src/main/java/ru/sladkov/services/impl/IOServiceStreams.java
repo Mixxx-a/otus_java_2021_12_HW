@@ -1,18 +1,20 @@
 package ru.sladkov.services.impl;
 
+import ru.sladkov.appcontainer.annotations.AppComponent;
 import ru.sladkov.services.IOService;
 
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.Scanner;
 
+@AppComponent(name = "ioService", interfaze = IOService.class)
 public class IOServiceStreams implements IOService {
     private final PrintStream out;
     private final Scanner in;
 
-    public IOServiceStreams(PrintStream out, InputStream in) {
-        this.out = out;
-        this.in = new Scanner(in);
+    public IOServiceStreams() {
+        this.out = System.out;
+        this.in = new Scanner(System.in);
     }
 
 
