@@ -1,10 +1,8 @@
 package ru.sladkov.appcontainer;
 
 import org.reflections.Reflections;
-import org.reflections.scanners.SubTypesScanner;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import ru.sladkov.App;
 import ru.sladkov.ComponentInitializationException;
 import ru.sladkov.ContainerInitializationException;
 import ru.sladkov.appcontainer.annotations.AppComponent;
@@ -14,7 +12,6 @@ import ru.sladkov.appcontainer.api.Component;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 
 public class AppComponentsContainerImpl implements AppComponentsContainer {
@@ -24,24 +21,14 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
     private final ComponentContextImpl componentContext;
     private final Queue<Component<?>> startQueue = new LinkedList<>();
     private long currentComponentId = INITIAL_ID;
-//    private final ComponentStateProducer
-
-//    public AppComponentsContainerImpl(Class<?> initialConfigClass) throws ContainerInitializationException {
-//        try {
-//            componentContext = new ComponentContextImpl();
-//            configObject = initialConfigClass.getConstructor().newInstance();
-//            Component<AppComponentsContainer> containerComponent = new ComponentImpl<>(currentComponentId, null);
-//            currentComponentId++;
-//            containerComponent.setInstance(this);
-//            containerComponent.setState(State.ACTIVE);
-//            processConfig(initialConfigClass);
-//        } catch (Exception e) {
-//            throw new ContainerInitializationException("Can't initialize container", e);
-//        }
-//    }
 
     public AppComponentsContainerImpl(String packageName) throws ContainerInitializationException {
         componentContext = new ComponentContextImpl();
+        Component<AppComponentsContainer> containerComponent = new ComponentImpl<>(currentComponentId,
+                "AppComponentsContainer", AppComponentsContainer.class, AppComponentsContainerImpl.class,
+                this, Collections.emptyList());
+        currentComponentId++;
+        containerComponent.setState(State.ACTIVE);
         Set<Class<?>> classes = getClasses(packageName);
         processClasses(classes);
     }
@@ -50,7 +37,6 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
         Reflections reflections = new Reflections(packageName);
         return reflections.getTypesAnnotatedWith(AppComponent.class);
     }
-
 
     private void processClasses(Set<Class<?>> classes) throws ContainerInitializationException {
         List<Class<?>> sortedClasses = classes.stream()
@@ -79,53 +65,16 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
                     .filter(field -> field.isAnnotationPresent(Reference.class))
                     .toList();
 
-            Component<T> component = new ComponentImpl<>(id, name, interfaze, instance);
-            component.setReferenceFields(referenceFields);
+            Component<T> component = new ComponentImpl<>(id, name, interfaze, clazz, instance, referenceFields);
 
             componentContext.addComponent(id, component);
             logger.info("Registered component {}", component);
             return component;
-        } catch (InvocationTargetException | InstantiationException | IllegalAccessException | NoSuchMethodException e) {
-            throw new RuntimeException(e);
+        } catch (InvocationTargetException | InstantiationException | IllegalAccessException |
+                 NoSuchMethodException e) {
+            logger.error("Unable to init component " + clazz, e);
         }
-
-    }
-
-    private <T> void resolveDependencies(Component<T> component) {
-        List<Component<?>> dependencies;
-        try {
-            dependencies = getComponentDependencies(component);
-        } catch (ComponentInitializationException | IllegalAccessException e) {
-            component.setState(State.UNRESOLVED);
-            return;
-        }
-        component.setDependencies(dependencies);
-        component.setState(State.RESOLVED);
-        logger.info("Dependencies RESOLVED for component {}", component);
-    }
-
-    private <T> void startComponent(Component<T> component) {
-        component.start();
-        component.setState(State.ACTIVE);
-        logger.info("STARTED component {}", component);
-    }
-
-    private List<Component<?>> getComponentDependencies(Component<?> component) throws ComponentInitializationException, IllegalAccessException {
-        List<Field> referenceFields = component.getReferenceFields();
-        List<Component<?>> components = new ArrayList<>();
-        for (Field referenceField : referenceFields) {
-            Class<?> referenceType = referenceField.getType();
-            Component<?> dependency = componentContext.getComponent(referenceType);
-            if (dependency != null && dependency.getState() == State.ACTIVE) {
-                referenceField.setAccessible(true);
-                referenceField.set(component.getInstance(), dependency.getInstance());
-                referenceField.setAccessible(false);
-                components.add(dependency);
-            } else throw new ComponentInitializationException("Can't get argument " + referenceType.getName()
-                    + " for initializing component ");
-            //++++++COMPONENT!!!!
-        }
-        return components;
+        return null;
     }
 
     private void startComponents() throws ComponentInitializationException {
@@ -137,8 +86,8 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
                 Component<?> component = startQueue.poll();
                 if (component != null) {
                     resolveDependencies(component);
-                    if (component.getState() == State.RESOLVED) {
-                        startComponent(component);
+                    if (component.getState() == State.SATISFIED) {
+                        activateComponent(component);
                         finishFlag = false;
                     } else {
                         startQueue.offer(component);
@@ -154,33 +103,94 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
         }
     }
 
-    @Override
-    public <C> C getAppComponent(Class<C> componentClass) {
-        return componentContext.getComponent(componentClass).getInstance();
+    private <T> void resolveDependencies(Component<T> component) {
+        try {
+            boolean isSatisfied = satisfyAvailableDependencies(component);
+            if (isSatisfied) {
+                component.setState(State.SATISFIED);
+                logger.info("Dependencies SATISFIED for component {}", component);
+            } else {
+                component.setState(State.UNSATISFIED);
+                logger.info("Dependencies UNSATISFIED for component {}", component);
+            }
+        } catch (ComponentInitializationException | IllegalAccessException e) {
+            logger.error("Unable to resolve dependencies of component " + component);
+        }
     }
 
-    @Override
-    public <C> C getAppComponent(String componentName) {
-        return null;
+    private boolean satisfyAvailableDependencies(Component<?> component) throws ComponentInitializationException, IllegalAccessException {
+        Map<Field, Component<?>> references = component.getReferences();
+        boolean allReferencesSatisfiedFlag = true;
+        for (Field referenceField : references.keySet()) {
+            if (references.get(referenceField) == null) {
+                Class<?> referenceType = referenceField.getType();
+                List<Component<?>> referenceComponents = componentContext.getComponentsByClass(referenceType);
+                boolean localReferenceSatisfied = false;
+                for (Component<?> referenceComponent : referenceComponents) {
+                    if (referenceComponent.getState() == State.ACTIVE) {
+                        referenceField.setAccessible(true);
+                        referenceField.set(component.getInstance(), referenceComponent.getInstance());
+                        referenceField.setAccessible(false);
+                        references.put(referenceField, referenceComponent);
+                        localReferenceSatisfied = true;
+                        break;
+                    }
+                }
+                if (!localReferenceSatisfied) {
+                    allReferencesSatisfiedFlag = false;
+                }
+            }
+        }
+        return allReferencesSatisfiedFlag;
     }
 
-    @Override
-    public void activateComponent(long id) {
-        Component<?> component = componentContext.getComponent(id);
-//        activateComponent(component);
-
+    private void activateComponent(Component<?> component) {
+        component.start();
+        component.setState(State.ACTIVE);
+        logger.info("ACTIVATED component {}", component);
     }
 
-    @Override
-    public void deactivateComponent(long id) {
-        Component<?> component = componentContext.getComponent(id);
+    private void deactivateComponent(Component<?> component) {
         component.stop();
+        component.setState(State.SATISFIED);
+        logger.info("DEACTIVATED component {}", component);
+    }
+
+    @Override
+    public <C> C getAppComponentById(long id) {
+        Component<C> component = componentContext.getComponent(id);
+        if (component.getState() != State.ACTIVE) {
+            logger.error("Unable to get AppComponent because it is not in active state: " + component);
+            return null;
+        }
+        return component.getInstance();
+    }
+
+    @Override
+    public void startComponent(long id) {
+        Component<?> component = componentContext.getComponent(id);
+        activateComponent(component);
+        setNewInstance(component);
+        refreshReferences();
+        injectReferences(component);
+    }
+
+    private <T> void setNewInstance(Component<T> component) {
+        Class<?> clazz = component.getImplementationClazz();
+        try {
+            T newInstance = (T) clazz.getDeclaredConstructor().newInstance();
+            component.setInstance(newInstance);
+        } catch (InvocationTargetException | InstantiationException | IllegalAccessException |
+                 NoSuchMethodException e) {
+            logger.error("Unable to set new instance for component " + component);
+        }
+    }
+
+    @Override
+    public void stopComponent(long id) {
+        Component<?> component = componentContext.getComponent(id);
+        deactivateComponent(component);
         component.setInstance(null);
-        component.setState(State.UNRESOLVED);
-        List<Component<?>> references = component.getReferences();
-//        for (Component<?> reference : references) {
-//
-//        }
         refreshReferences();
     }
 
@@ -192,6 +202,64 @@ public class AppComponentsContainerImpl implements AppComponentsContainer {
     }
 
     private void refreshReferences() {
+        for (Component<?> component : componentContext.getAllComponents()) {
+            Map<Field, Component<?>> references = component.getReferences();
+            for (Map.Entry<Field, Component<?>> entry : references.entrySet()) {
+                Field referenceField = entry.getKey();
+                Component<?> referenceComponent = entry.getValue();
+                if (referenceComponent == null) {
+                    //Проверка на доступность компонента в контексте, добавление
+                    Class<?> referenceType = referenceField.getType();
+                    List<Component<?>> referenceComponents = componentContext.getComponentsByClass(referenceType);
+                    boolean localReferenceSatisfied = false;
+                    for (Component<?> dependency : referenceComponents) {
+                        if (dependency.getState() == State.ACTIVE) {
+                            try {
+                                referenceField.setAccessible(true);
+                                referenceField.set(component.getInstance(), dependency.getInstance());
+                                referenceField.setAccessible(false);
+                            } catch (IllegalAccessException e) {
+                                throw new RuntimeException(e);
+                            }
+                            references.put(referenceField, dependency);
+                            localReferenceSatisfied = true;
+                            break;
+                        }
+                    }
+                    logger.info("RefreshReferences: Satisfy reference for field {}", entry.getKey());
+                } else if (referenceComponent.getState() != State.ACTIVE) {
+                    //Удаление референса
+                    entry.setValue(null);
+                    try {
+                        referenceField.setAccessible(true);
+                        referenceField.set(component.getInstance(), null);
+                        referenceField.setAccessible(false);
+                    } catch (IllegalAccessException e) {
+                        logger.error("Can't set referenceField", e);
+                    }
+                    component.setState(State.UNSATISFIED);
+                    logger.info("RefreshReferences: Unsatisfied reference for field {}", entry.getKey());
+                    logger.info("Trying to satisfy dependencies...");
+                    resolveDependencies(component);
+                }
+            }
+        }
+    }
 
+    private <T> void injectReferences(Component<T> component) {
+        Map<Field, Component<?>> references = component.getReferences();
+        for (Map.Entry<Field, Component<?>> entry : references.entrySet()) {
+            Field referenceField = entry.getKey();
+            Component<?> referenceComponent = entry.getValue();
+            if (referenceComponent != null) {
+                try {
+                    referenceField.setAccessible(true);
+                    referenceField.set(component.getInstance(), referenceComponent.getInstance());
+                    referenceField.setAccessible(false);
+                } catch (IllegalAccessException e) {
+                    logger.error("Can't set referenceField", e);
+                }
+            }
+        }
     }
 }

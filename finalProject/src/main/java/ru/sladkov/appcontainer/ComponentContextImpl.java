@@ -20,13 +20,14 @@ public class ComponentContextImpl implements ComponentContext {
     }
 
     @Override
-    public  <C> Component<C> getComponent(Class<C> componentClass) {
+    public <C> List<Component<?>> getComponentsByClass(Class<C> componentClass) {
+        List<Component<?>> components = new ArrayList<>();
         for (Component<?> component : appComponents) {
             if (componentClass.isAssignableFrom(component.getInterfaze())) {
-                return (Component<C>) component;
+                components.add(component);
             }
         }
-        return null;
+        return components;
     }
 
     @Override

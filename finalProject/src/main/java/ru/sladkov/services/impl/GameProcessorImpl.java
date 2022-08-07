@@ -12,7 +12,7 @@ import ru.sladkov.services.PlayerService;
 
 import java.util.List;
 
-//@AppComponent(name = "gameProcessor", priority = 10)
+@AppComponent(name = "gameProcessor", priority = 10, interfaze = GameProcessor.class)
 public class GameProcessorImpl implements GameProcessor {
 
     private static final String MSG_HEADER = "Проверка знаний таблицы умножения";
@@ -39,7 +39,7 @@ public class GameProcessorImpl implements GameProcessor {
         equations.forEach(e -> {
             boolean isRight = ioService.readInt(e.toString()) == e.getResult();
             gameResult.incrementRightAnswers(isRight);
-            ioService.out(isRight? MSG_RIGHT_ANSWER : MSG_WRONG_ANSWER);
+            ioService.out(isRight ? MSG_RIGHT_ANSWER : MSG_WRONG_ANSWER);
         });
         ioService.out(gameResult.toString());
     }
