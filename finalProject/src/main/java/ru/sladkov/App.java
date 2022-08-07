@@ -13,20 +13,21 @@ public class App {
 //        helloService.hello();
         container.printAllComponents();
 
+        //Получение StringService, в зависимостях у которого есть PrintService
         StringService stringService = container.getAppComponentById(5);
         stringService.printString();
         stringService.printString();
 
+        //Остановка PrintService 1
         container.stopComponent(6);
-        container.printAllComponents();
 
+        //В StringService динамически подгужается другой компонент PrintService 2, без пересоздания инстанса
         stringService.printString();
         stringService.printString();
 
+        //Остановка и запуск StringService. Идёт пересоздания инстанса.
         container.stopComponent(5);
-        container.startComponent(6);
         container.startComponent(5);
-        container.printAllComponents();
 
         stringService = container.getAppComponentById(5);
         stringService.printString();
