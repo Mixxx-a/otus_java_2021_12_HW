@@ -39,6 +39,7 @@ allprojects {
             dependency("io.grpc:grpc-netty:${Versions.grpc}")
             dependency("io.grpc:grpc-protobuf:${Versions.grpc}")
             dependency("io.grpc:grpc-stub:${Versions.grpc}")
+            dependency("info.picocli:picocli:${Versions.picocli}")
         }
     }
 
